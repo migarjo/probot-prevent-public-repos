@@ -1,6 +1,6 @@
-// const PreventPublicRepos = require('./lib/PreventPublicRepos')
+const PreventPublicRepos = require('./lib/prevent-public-repos')
 
-module.exports = (robot, _, PreventPublicRepos = require('./lib/PreventPublicRepos')) => {
+function probot (robot) {
   robot.on('repository.created', async context => {
     return PreventPublicRepos.analyze(context.github, context.repo(), context.payload, robot.log)
   })
@@ -10,3 +10,5 @@ module.exports = (robot, _, PreventPublicRepos = require('./lib/PreventPublicRep
     return PreventPublicRepos.analyze(context.github, context.repo(), context.payload, robot.log)
   })
 }
+
+module.exports = probot
