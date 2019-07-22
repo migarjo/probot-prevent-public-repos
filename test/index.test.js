@@ -1,4 +1,4 @@
-const {createRobot} = require('probot')
+const { createRobot } = require('probot')
 const plugin = require('../index')
 
 describe('plugin', () => {
@@ -10,9 +10,9 @@ describe('plugin', () => {
     robot = createRobot()
     robot.auth = () => Promise.resolve({})
 
-    analyze = jest.fn()
+    analyze = jest.fn().mockImplementation(() => Promise.resolve())
 
-    plugin(robot, {}, {analyze})
+    plugin(robot, {}, { analyze })
   })
 
   describe('analyzes on created repo', () => {
@@ -54,6 +54,38 @@ describe('plugin', () => {
     it('does not analyze repo', async () => {
       await robot.receive(event)
       expect(analyze).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('catches any errors on analyze', () => {
+    beforeEach(() => {
+      robot = createRobot()
+      robot.auth = () => Promise.resolve({})
+      analyze = jest.fn().mockImplementation(() => Promise.reject(new Error('Bad yaml syntax')))
+
+      plugin(robot, {}, { analyze })
+    })
+
+    it('catches created repo errors', async () => {
+      event = {
+        event: 'repository',
+        payload: JSON.parse(JSON.stringify(require('./events/repo.create.json')))
+      }
+      var spyLogError = jest.spyOn(robot.log, 'error')
+
+      await robot.receive(event)
+      expect(spyLogError).toHaveBeenCalled()
+    })
+
+    it('catches publicized repo errors', async () => {
+      event = {
+        event: 'repository',
+        payload: JSON.parse(JSON.stringify(require('./events/repo.publicizied.json')))
+      }
+      var spyLogError = jest.spyOn(robot.log, 'error')
+
+      await robot.receive(event)
+      expect(spyLogError).toHaveBeenCalled()
     })
   })
 })
